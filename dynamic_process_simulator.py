@@ -299,8 +299,8 @@ class Window(QtWidgets.QDialog):
                 child.set_color('white')
 
         ax.tick_params(axis='both', colors='white')
-        ax.set_title(title)
         ax.clear()
+        ax.set_title(title, color="white")
         if len(time_data) > 50:
             ax.plot(list(range(len(time_data) - 50, len(time_data))), 
                     data[len(time_data) - 50 :], '.-', color = 'white')
