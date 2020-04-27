@@ -280,11 +280,11 @@ class Window(QtWidgets.QDialog):
         self.plot_to_figure(ax, output_data, "Output")
 
     def generate_response(self):
-        if time_data[-1] - self.n_value - 2 > 0:
+        if time_data[-1] - self.n_value - 2 > -1:
             output_data.append(self.a1 * output_data[time_data[-1]-1] + \
                                     self.b1 * input_data[time_data[-1] - self.n_value - 1] + \
                                     self.b2 * input_data[time_data[-1] - self.n_value - 2] + self.noise)
-        elif time_data[-1] - self.n_value - 1 > 0:
+        elif time_data[-1] - self.n_value - 1 > -1:
             output_data.append(self.a1 * output_data[time_data[-1]-1] + \
                                     self.b1 * input_data[time_data[-1] - self.n_value - 1] + self.noise)
         elif time_data[-1] > 0:
