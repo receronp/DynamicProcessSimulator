@@ -15,6 +15,7 @@ from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as Navigatio
 time_data = [0]
 input_data = list()
 output_data = list()
+system_data = list()
 noise_data = list()
 
 class Window(QtWidgets.QDialog):
@@ -84,6 +85,7 @@ class Window(QtWidgets.QDialog):
         self.a1_label = QtWidgets.QLabel(self, text="a1 = ?", styleSheet="color : white")
         self.b1_label = QtWidgets.QLabel(self, text="b1 = ?", styleSheet="color : white")
         self.b2_label = QtWidgets.QLabel(self, text="b2 = ?", styleSheet="color : white")
+        self.n_value_label = QtWidgets.QLabel(self, text="N = ?", styleSheet="color : white")
 
         self.input_label = QtWidgets.QLabel(self, text="Input: ", styleSheet="color : white")
         self.step_box = QtWidgets.QCheckBox("Step Function", self, checked = True, styleSheet="color : white")
@@ -113,6 +115,7 @@ class Window(QtWidgets.QDialog):
         vbox1.addWidget(self.a1_label)
         vbox1.addWidget(self.b1_label)
         vbox1.addWidget(self.b2_label)
+        vbox1.addWidget(self.n_value_label)
         
         # Second line column of buttons.
         vbox2 = QtWidgets.QVBoxLayout()
@@ -142,13 +145,12 @@ class Window(QtWidgets.QDialog):
         hbox2.addLayout(vbox3)
         hbox2.addStretch()
 
-        # set the layout
+        # Setting of layout
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(self.toolbar)
         layout.addLayout(hbox1)
         layout.addLayout(hbox2)
         layout.addWidget(self.canvas)
-        # layout.addWidget(self.button)
         self.setLayout(layout)
     
     def reset(self):
@@ -156,6 +158,7 @@ class Window(QtWidgets.QDialog):
         time_data = [0]
         self.noise = 0
         input_data.clear()
+        system_data.clear()
         output_data.clear()
         noise_data.clear()
         self.file_data.clear()
@@ -199,7 +202,10 @@ class Window(QtWidgets.QDialog):
             self.period = float(self.period_line_edit.text())
             if self.gain > 0 and self.tau > 0 and self.theta_prime > 0 and self.period > 0 :
                 if self.step_box.isChecked():
-                    self.magnitude = float(self.step_magnitude_line_edit.text())
+                    if float(self.step_magnitude_line_edit.text()) == 0.0:
+                        self.magnitude = 0.0000000000001
+                    else:
+                        self.magnitude = float(self.step_magnitude_line_edit.text())
                 else:
                     if self.file_data[time_data[-1]] is None:
                         return False
@@ -215,6 +221,7 @@ class Window(QtWidgets.QDialog):
         self.a1_label.setText("a1 = {}".format(self.a1))
         self.b1_label.setText("b1 = {}".format(self.b1))
         self.b2_label.setText("b2 = {}".format(self.b2))
+        self.n_value_label.setText("N = {}".format(self.n_value))
 
     def calculate_parameters(self):
         self.n_value = int(self.theta_prime / self.period)
@@ -241,58 +248,53 @@ class Window(QtWidgets.QDialog):
         self.plot_response()
 
     def plot_input(self):
+        ylim = 5
         if(self.step_box.isChecked()):
             global input_data
             input_data.append(self.magnitude)
+            ylim += abs(self.magnitude)
         else:
             input_data.append(self.file_data[time_data[-1]])
+            ylim += abs(self.file_data[time_data[-1]])
 
-        # create an axis
         ax = self.figure.add_subplot(131)
-        self.plot_to_figure(ax, input_data, "Input")
+        self.plot_to_figure(ax, input_data, "Input", [-ylim,ylim])
 
     def plot_noise(self):
+        ylim = 5
         global noise_data
         if self.noise_box.isChecked():
             noise_data.append(self.noise)
+            ylim += abs(self.noise)
         else:
             noise_data.append(0)
         
-        # create an axis
         ax = self.figure.add_subplot(132)
-        self.plot_to_figure(ax, noise_data, "Noise")
+        self.plot_to_figure(ax, noise_data, "Noise", [-ylim,ylim])
 
     def plot_response(self):
-        if self.step_box.isChecked():
-            try:
-                if self.magnitude > 0:
-                    self.generate_response()
-            except ValueError as ve:
-                print(ve)
-        else:
-            try:
-                self.generate_response()
-            except:
-                print("Unexpected error:", sys.exc_info()[0])
-                raise
-
+        self.generate_response()
+        ylim_low = int(min(output_data[-40:]) - 5)
+        ylim_up = int(max(output_data[-40:]) + 5)
         ax = self.figure.add_subplot(133)
-        self.plot_to_figure(ax, output_data, "Output")
+        self.plot_to_figure(ax, output_data, "Output",[ylim_low, ylim_up])
 
     def generate_response(self):
         if time_data[-1] - self.n_value - 2 > -1:
-            output_data.append(self.a1 * output_data[time_data[-1]-1] + \
+            system_data.append(self.a1 * system_data[time_data[-1]-1] + \
                                     self.b1 * input_data[time_data[-1] - self.n_value - 1] + \
-                                    self.b2 * input_data[time_data[-1] - self.n_value - 2] + self.noise)
+                                    self.b2 * input_data[time_data[-1] - self.n_value - 2])
         elif time_data[-1] - self.n_value - 1 > -1:
-            output_data.append(self.a1 * output_data[time_data[-1]-1] + \
-                                    self.b1 * input_data[time_data[-1] - self.n_value - 1] + self.noise)
+            system_data.append(self.a1 * system_data[time_data[-1]-1] + \
+                                    self.b1 * input_data[time_data[-1] - self.n_value - 1])
         elif time_data[-1] > 0:
-            output_data.append(self.a1 * output_data[time_data[-1]-1] + self.noise)
+            system_data.append(self.a1 * system_data[time_data[-1]-1])
         else: 
-            output_data.append(0.0 + self.noise)
+            system_data.append(0.0)
 
-    def plot_to_figure(self, ax, data, title):
+        output_data.append(system_data[-1] + self.noise)
+
+    def plot_to_figure(self, ax, data, title, ylim):
         ax.set_facecolor('#252526')
         for child in ax.get_children():
             if isinstance(child, Spine):
@@ -301,9 +303,10 @@ class Window(QtWidgets.QDialog):
         ax.tick_params(axis='both', colors='white')
         ax.clear()
         ax.set_title(title, color="white")
-        if len(time_data) > 50:
-            ax.plot(list(range(len(time_data) - 50, len(time_data))), 
-                    data[len(time_data) - 50 :], '.-', color = 'white')
+        ax.set_ylim(ylim)
+        if len(time_data) > 20:
+            ax.plot(list(range(len(time_data) - 20, len(time_data))), 
+                    data[len(time_data) - 20 :], '.-', color = 'white')
         else:
             ax.plot(list(range(0, len(time_data))), data, '.-', color = 'white')
         self.canvas.draw()
