@@ -21,6 +21,8 @@ noise_data = list()
 class Window(QtWidgets.QDialog):
     def __init__(self, parent=None):
         super(Window, self).__init__(parent)
+        self.time_on = False
+        self.file_to_input = False
         timer = QtCore.QTimer(self)
         timer.timeout.connect(self.update_figure)
         timer.start(1000)
@@ -93,10 +95,14 @@ class Window(QtWidgets.QDialog):
 
         self.step_magnitude_label = QtWidgets.QLabel(self, text="Magnitude of step (Mo): ", styleSheet="color : white")
         self.step_magnitude_line_edit = QtWidgets.QLineEdit(self, styleSheet="color : white")
+        self.step_magnitude_line_edit.returnPressed.connect(self.set_time_on)
+        self.step_magnitude_line_edit.textChanged.connect(self.set_time_off)
 
         self.step_noise_label = QtWidgets.QLabel(self, text="Magnitude of noise step (Po): ", styleSheet="color : white")
         self.step_noise_line_edit = QtWidgets.QLineEdit(self, styleSheet="color : black")
         self.step_noise_line_edit.setDisabled(True)
+        self.step_noise_line_edit.returnPressed.connect(self.set_time_on)
+        self.step_noise_line_edit.textChanged.connect(self.set_time_off)
 
         self.step_box.stateChanged.connect(lambda:self.input_button_state(self.step_box))
         self.noise_box.stateChanged.connect(lambda:self.noise_button_state(self.noise_box))
@@ -153,6 +159,16 @@ class Window(QtWidgets.QDialog):
         layout.addWidget(self.canvas)
         self.setLayout(layout)
     
+    def set_time_on(self):
+        self.time_on = True
+
+    def set_time_off(self):
+        self.time_on = False
+        if self.file_to_input == True:
+            # self.file_data.clear()
+            self.time_on = True
+            self.file_to_input = False
+
     def reset(self):
         global time_data
         time_data = [0]
@@ -179,6 +195,7 @@ class Window(QtWidgets.QDialog):
             self.file_button.setEnabled(True)
             self.file_button.setStyleSheet("color : white;")
             self.step_magnitude_line_edit.setStyleSheet("color : black;")
+            self.file_data.clear()
 
     def noise_button_state(self,state):
         if state.isChecked() == True:
@@ -189,7 +206,7 @@ class Window(QtWidgets.QDialog):
             self.step_noise_line_edit.setStyleSheet("color : black;")
 
     def update_figure(self):
-        if self.validate_input():
+        if self.validate_input() and self.time_on:
             self.calculate_parameters()
             self.plot_graphs()
             time_data.append(time_data[-1] + 1)
@@ -207,8 +224,13 @@ class Window(QtWidgets.QDialog):
                     else:
                         self.magnitude = float(self.step_magnitude_line_edit.text())
                 else:
-                    if self.file_data[time_data[-1]] is None:
+                    if len(self.file_data) == 0:
                         return False
+                    if len(self.file_data) <= time_data[-1]:
+                        self.file_to_input = True
+                        self.magnitude = float(self.file_data[-1])
+                        self.step_magnitude_line_edit.setText(str(self.file_data[-1]))
+                        self.step_box.setChecked(True)
                 if self.noise_box.isChecked():
                     self.noise = float(self.step_noise_line_edit.text())
                 return True
@@ -236,9 +258,12 @@ class Window(QtWidgets.QDialog):
         try:
             self.file_data.clear()
             fname = QtWidgets.QFileDialog.getOpenFileName(self, 'Open file', '.',"Text files (*.txt)")
+            self.file_data = input_data.copy()
             with open(fname[0], 'r') as file_input:
                 for line in file_input.readlines():
-                    self.file_data.append(float(line.split()[0]))
+                    if line[0] != '\n':
+                        self.file_data.append(float(line.split()[0]))
+            self.time_on = True
         except FileNotFoundError as fnf:
             print(fnf)
     
