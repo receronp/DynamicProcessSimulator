@@ -1,7 +1,7 @@
 """
 dynamic_process_simulator.py
 Autor: Raul Eugenio Ceron Pineda
-Version: 1.0.0
+Version: 1.0.2
 """
 import sys
 import math
@@ -24,9 +24,9 @@ class Window(QtWidgets.QDialog):
         super(Window, self).__init__(parent)
         self.time_on = False
         self.file_to_input = False
-        timer = QtCore.QTimer(self)
-        timer.timeout.connect(self.update_figure)
-        timer.start(1000)
+        self.timer = QtCore.QTimer(self)
+        self.timer.timeout.connect(self.update_figure)
+        self.timer.start(1000)
 
         self.file_data = list()
 
@@ -75,14 +75,18 @@ class Window(QtWidgets.QDialog):
         # First line Widgets
         self.gain_line_edit = QtWidgets.QLineEdit(self, styleSheet="color : white")
         self.gain_line_edit.returnPressed.connect(self.edit_return)
+        self.gain_line_edit.textChanged.connect(self.set_time_off)
         self.tau_line_edit = QtWidgets.QLineEdit(self, styleSheet="color : white")
         self.tau_line_edit.returnPressed.connect(self.edit_return)
+        self.tau_line_edit.textChanged.connect(self.set_time_off)
         self.theta_prime_line_edit = QtWidgets.QLineEdit(
             self, styleSheet="color : white"
         )
         self.theta_prime_line_edit.returnPressed.connect(self.edit_return)
+        self.theta_prime_line_edit.textChanged.connect(self.set_time_off)
         self.period_line_edit = QtWidgets.QLineEdit(self, styleSheet="color : white")
         self.period_line_edit.returnPressed.connect(self.edit_return)
+        self.period_line_edit.textChanged.connect(self.set_time_off)
 
         # First line elements.
         hbox1 = QtWidgets.QHBoxLayout()
@@ -302,6 +306,9 @@ class Window(QtWidgets.QDialog):
     def set_step_magnitude(self):
         if len(output_data) > 0:
             self.step_magnitude_line_edit.setText(f"{output_data[-1]:.3f}")
+            self.step_noise_line_edit.setText("")
+            self.noise = 0
+            self.noise_box.setChecked(False)
             self.set_time_on()
 
     def set_auto_time_on(self):
@@ -375,6 +382,7 @@ class Window(QtWidgets.QDialog):
             self.tau = float(self.tau_line_edit.text())
             self.theta_prime = float(self.theta_prime_line_edit.text())
             self.period = float(self.period_line_edit.text())
+            self.timer.start(self.period * 1000)
             if (
                 self.gain > 0
                 and self.tau > 0
