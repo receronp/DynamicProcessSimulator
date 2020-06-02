@@ -129,6 +129,14 @@ class Window(QtWidgets.QDialog):
             self, text="error = ?", styleSheet="color : white"
         )
 
+        self.mk_label = QtWidgets.QLabel(
+            self, text="m(k) = ?", styleSheet="color : white"
+        )
+
+        self.ck_label = QtWidgets.QLabel(
+            self, text="c(k) = ?", styleSheet="color : white"
+        )
+
         self.step_box = QtWidgets.QCheckBox(
             "Step Function", self, checked=True, styleSheet="color : white"
         )
@@ -139,6 +147,7 @@ class Window(QtWidgets.QDialog):
         self.manual_mode = QtWidgets.QRadioButton(
             self, text="Manual Mode", checked=True, styleSheet="color : white"
         )
+        self.manual_mode.toggled.connect(self.set_step_magnitude)
         self.auto_mode = QtWidgets.QRadioButton(
             self, text="Auto Mode", styleSheet="color : white"
         )
@@ -195,12 +204,14 @@ class Window(QtWidgets.QDialog):
         vbox1.addWidget(self.b1_label)
         vbox1.addWidget(self.b2_label)
         vbox1.addWidget(self.n_value_label)
+        vbox1.addWidget(self.mk_label)
 
         vbox8 = QtWidgets.QVBoxLayout()
         vbox8.addWidget(self.q0_label)
         vbox8.addWidget(self.q1_label)
         vbox8.addWidget(self.q2_label)
         vbox8.addWidget(self.error_label)
+        vbox8.addWidget(self.ck_label)
 
         # Second line column of buttons.
         vbox2 = QtWidgets.QVBoxLayout()
@@ -287,6 +298,11 @@ class Window(QtWidgets.QDialog):
         layout.addLayout(hbox2)
         layout.addWidget(self.canvas)
         self.setLayout(layout)
+
+    def set_step_magnitude(self):
+        if len(output_data) > 0:
+            self.step_magnitude_line_edit.setText(f"{output_data[-1]:.3f}")
+            self.set_time_on()
 
     def set_auto_time_on(self):
         if self.auto_mode.isChecked():
@@ -397,7 +413,7 @@ class Window(QtWidgets.QDialog):
         self.a1_label.setText(f"a1 = {self.a1:.3f}")
         self.b1_label.setText(f"b1 = {self.b1:.3f}")
         self.b2_label.setText(f"b2 = {self.b2:.3f}")
-        self.n_value_label.setText(f"N = {self.n_value:.3f}")
+        self.n_value_label.setText(f"N = {self.n_value}")
         if self.auto_mode.isChecked():
             self.q0_label.setText(f"q0 = {self.q0:.3f}")
             self.q1_label.setText(f"q1 = {self.q1:.3f}")
@@ -459,6 +475,7 @@ class Window(QtWidgets.QDialog):
         else:
             noise_data.append(0)
 
+        self.mk_label.setText(f"m(k) = {input_data[-1]:.3f}")
         ax = self.figure.add_subplot(211)
         self.plot_to_figure(ax, [input_data, noise_data], "Input", [-10, 100])
 
@@ -485,6 +502,7 @@ class Window(QtWidgets.QDialog):
             system_data.append(0.0)
 
         output_data.append(system_data[-1] + self.noise)
+        self.ck_label.setText(f"c(k) = {output_data[-1]:.3f}")
         if self.manual_mode.isChecked():
             self.set_point = output_data[-1]
             self.set_point_line_edit.setText(f"{self.set_point:.3f}")
