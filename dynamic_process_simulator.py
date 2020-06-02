@@ -74,17 +74,21 @@ class Window(QtWidgets.QDialog):
 
         # First line Widgets
         self.gain_line_edit = QtWidgets.QLineEdit(self, styleSheet="color : white")
+        self.gain_line_edit.setText("1")
         self.gain_line_edit.returnPressed.connect(self.edit_return)
         self.gain_line_edit.textChanged.connect(self.set_time_off)
         self.tau_line_edit = QtWidgets.QLineEdit(self, styleSheet="color : white")
+        self.tau_line_edit.setText("3.34")
         self.tau_line_edit.returnPressed.connect(self.edit_return)
         self.tau_line_edit.textChanged.connect(self.set_time_off)
         self.theta_prime_line_edit = QtWidgets.QLineEdit(
             self, styleSheet="color : white"
         )
+        self.theta_prime_line_edit.setText("1.46")
         self.theta_prime_line_edit.returnPressed.connect(self.edit_return)
         self.theta_prime_line_edit.textChanged.connect(self.set_time_off)
         self.period_line_edit = QtWidgets.QLineEdit(self, styleSheet="color : white")
+        self.period_line_edit.setText("1")
         self.period_line_edit.returnPressed.connect(self.edit_return)
         self.period_line_edit.textChanged.connect(self.set_time_off)
 
@@ -163,12 +167,15 @@ class Window(QtWidgets.QDialog):
             self, styleSheet="color : white"
         )
         self.kc_line_edit.returnPressed.connect(self.set_auto_time_on)
+        self.kc_line_edit.setText("1.957983")
         self.kc_line_edit.textChanged.connect(self.set_auto_time_off)
         self.set_point_line_edit.returnPressed.connect(self.set_auto_time_on)
         self.set_point_line_edit.textChanged.connect(self.set_auto_time_off)
         self.integral_line_edit.returnPressed.connect(self.set_auto_time_on)
+        self.integral_line_edit.setText("4.564447")
         self.integral_line_edit.textChanged.connect(self.set_auto_time_off)
         self.derivative_line_edit.returnPressed.connect(self.set_auto_time_on)
+        self.derivative_line_edit.setText("0.476814")
         self.derivative_line_edit.textChanged.connect(self.set_auto_time_off)
 
         self.step_magnitude_line_edit = QtWidgets.QLineEdit(
@@ -305,10 +312,7 @@ class Window(QtWidgets.QDialog):
 
     def set_step_magnitude(self):
         if len(output_data) > 0:
-            self.step_magnitude_line_edit.setText(f"{output_data[-1]:.3f}")
-            self.step_noise_line_edit.setText("")
-            self.noise = 0
-            self.noise_box.setChecked(False)
+            self.step_magnitude_line_edit.setText(f"{output_data[-1] - self.noise:.3f}")
             self.set_time_on()
 
     def set_auto_time_on(self):
@@ -368,7 +372,10 @@ class Window(QtWidgets.QDialog):
             self.step_noise_line_edit.setStyleSheet("color : white;")
         else:
             self.step_noise_line_edit.setDisabled(True)
+            self.step_noise_line_edit.setText("")
+            self.noise = 0
             self.step_noise_line_edit.setStyleSheet("color : black;")
+            self.set_time_on()
 
     def update_figure(self):
         if self.validate_input() and self.time_on:
@@ -484,12 +491,12 @@ class Window(QtWidgets.QDialog):
             noise_data.append(0)
 
         self.mk_label.setText(f"m(k) = {input_data[-1]:.3f}")
-        ax = self.figure.add_subplot(211)
-        self.plot_to_figure(ax, [input_data, noise_data], "Input", [-10, 100])
+        ax = self.figure.add_subplot(212)
+        self.plot_to_figure(ax, [input_data, noise_data], "Noise and Manipulation", [-10, 100])
 
     def plot_response(self):
         self.generate_response()
-        ax = self.figure.add_subplot(212)
+        ax = self.figure.add_subplot(211)
         self.plot_to_figure(ax, [output_data], "Output", [-10, 100])
 
     def generate_response(self):
