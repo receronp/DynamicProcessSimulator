@@ -3,6 +3,8 @@
 This Computerized Control Project is an implementation of a First Order Dynamic Process Simulator
 with the option to add a noise step function to the system.
 
+![First order animation](dynamic_process.gif)
+
 ## Getting Started
 
 User needs to provide the the following inputs for the system to start plotting data:
